@@ -4,5 +4,7 @@ version = "0.1.0"
 authors = ["Ben Merritt <blm768@gmail.com>"]
 
 [dependencies]
+# TODO: break out a workspace or something so "core" libraries don't depend on this?
+clap = "2.29.0"
 futures = "0.1.14"
 hyper = "0.11.0"
