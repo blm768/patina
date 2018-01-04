@@ -3,6 +3,7 @@ extern crate hyper;
 extern crate patina;
 
 use std::net::SocketAddr;
+use std::rc::Rc;
 
 use clap::{App, Arg};
 
@@ -11,7 +12,7 @@ use hyper::server::Http;
 use patina::web;
 use patina::web::WebService;
 
-const DEFAULT_BIND_IP: &'static str = "0.0.0.0";
+const DEFAULT_BIND_IP: &str = "0.0.0.0";
 const DEFAULT_HTTP_PORT: u16 = 80;
 
 pub fn main() {
@@ -57,7 +58,7 @@ pub fn main() {
         let router = web::default_router();
 
         let server = Http::new()
-            .bind(&addr, move || Ok(WebService::new(router.clone())))
+            .bind(&addr, move || Ok(WebService::new(Rc::clone(&router))))
             .unwrap();
         server.run().unwrap();
     }

@@ -14,6 +14,7 @@ pub enum RouteEntry {
 /**
  * Performs routing at the directory level
  */
+#[derive(Default)]
 pub struct DirectoryRouter {
     // TODO: support an index entry.
     static_members: HashMap<Box<str>, RouteEntry>,
