@@ -3,6 +3,15 @@ use std::collections::HashMap;
 
 use web::RequestHandler;
 
+// Removes a single leading slash (if present) from a string
+pub fn remove_leading_slash(path: &str) -> &str {
+    if path.starts_with('/') {
+        &path[1..]
+    } else {
+        path
+    }
+}
+
 /**
  * Maps a request to an object that can handle it
  */
@@ -13,19 +22,22 @@ pub trait Router {
     fn route(&self, path: &str) -> Option<&RequestHandler>;
 }
 
-/**
- * An entry in a table of routing handlers
- */
-pub enum RouteEntry {
-    /// A sub-router (typically used to handle nested directories)
-    Router(Box<Router>),
-    /// A request handler
-    Handler(Box<RequestHandler>),
+// We let RequestHandlers route to themselves if given an empty path.
+// This makes building routing trees simpler.
+impl<T: RequestHandler> Router for T {
+    fn route(&self, path: &str) -> Option<&RequestHandler> {
+        if remove_leading_slash(path).is_empty() {
+            Some(self)
+        } else {
+            None
+        }
+    }
 }
 
-impl<T: RequestHandler + 'static> From<T> for RouteEntry {
-    fn from(handler: T) -> RouteEntry {
-        RouteEntry::Handler(Box::new(handler))
+// This helps us build route trees without needing to explicitly box all the routers.
+impl<T: Router + 'static> From<T> for Box<Router> {
+    fn from(router: T) -> Box<Router> {
+        Box::new(router)
     }
 }
 
@@ -35,7 +47,7 @@ impl<T: RequestHandler + 'static> From<T> for RouteEntry {
 #[derive(Default)]
 pub struct DirectoryRouter {
     index_handler: Option<Box<RequestHandler>>,
-    named_routes: HashMap<Box<str>, RouteEntry>,
+    named_routes: HashMap<Box<str>, Box<Router>>,
     // TODO: support regex entries?
     // TODO: support a default router?
 }
@@ -53,7 +65,7 @@ impl DirectoryRouter {
         self
     }
 
-    pub fn with_named_route<T: Into<RouteEntry>>(
+    pub fn with_named_route<T: Into<Box<Router>>>(
         mut self,
         name: &str,
         entry: T,
@@ -66,21 +78,28 @@ impl DirectoryRouter {
 impl Router for DirectoryRouter {
     fn route(&self, path: &str) -> Option<&RequestHandler> {
         // Trim leading slash.
+        let path_trimmed = remove_leading_slash(path);
 
-        let (head, tail) = match path.find('/') {
-            Some(separator) => path.split_at(separator),
-            None => (path, ""),
+        let (head, tail) = match path_trimmed.find('/') {
+            Some(separator) => path_trimmed.split_at(separator),
+            None => (path_trimmed, ""),
         };
 
+        // Are we retrieving the index page?
         if head.is_empty() {
-            // TODO: make sure there's no tail?
-            match self.index_handler {
-                Some(ref handler) => Some(handler.borrow()),
-                None => None,
+            if tail.is_empty() {
+                match self.index_handler {
+                    Some(ref handler) => Some(handler.borrow()),
+                    None => None,
+                }
+            } else {
+                None
             }
         } else {
-            // TODO: implement.
-            None
+            match self.named_routes.get(head) {
+                Some(router) => router.route(tail),
+                None => None,
+            }
         }
     }
 }
