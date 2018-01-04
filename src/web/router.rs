@@ -72,7 +72,7 @@ impl Router for DirectoryRouter {
             None => (path, ""),
         };
 
-        if head.len() == 0 {
+        if head.is_empty() {
             // TODO: make sure there's no tail?
             match self.index_handler {
                 Some(ref handler) => Some(handler.borrow()),

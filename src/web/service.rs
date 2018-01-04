@@ -13,6 +13,9 @@ pub struct WebService {
     router: Rc<Router>,
 }
 
+/**
+ * A `hyper` service implementation for the application's main Web server
+ */
 impl WebService {
     pub fn new(router: Rc<Router>) -> WebService {
         WebService { router: router }
@@ -22,6 +25,7 @@ impl WebService {
 impl Service for WebService {
     type Request = Request;
     type Response = Response;
+    // TODO: use a different error type? (maybe use the failure crate...)
     type Error = hyper::Error;
     type Future = Box<Future<Item = Self::Response, Error = Self::Error>>;
 

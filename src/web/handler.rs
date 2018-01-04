@@ -8,11 +8,13 @@ use web::service::WebService;
 
 type Request = <WebService as Service>::Request;
 type Response = <WebService as Service>::Response;
+type ResponseFuture = <WebService as Service>::Future;
 
 // TODO: create a RequestContext trait? (or RoutingContext?)
+// (would let us have a global error handler that renders an error page)
 
 pub trait RequestHandler {
-    fn handle(&self, request: Request) -> <WebService as Service>::Future;
+    fn handle(&self, request: Request) -> ResponseFuture;
 }
 
 // This helps us build route trees without needing to explicitly box all the handlers.
@@ -33,9 +35,9 @@ impl DummyHandler {
 }
 
 impl RequestHandler for DummyHandler {
-    fn handle(&self, request: Request) -> <WebService as Service>::Future {
-        match request.method() {
-            &Method::Get => {
+    fn handle(&self, request: Request) -> ResponseFuture {
+        match *request.method() {
+            Method::Get => {
                 let response = Response::new()
                     .with_header(ContentLength(self.content.len() as u64))
                     .with_body(self.content.clone());
