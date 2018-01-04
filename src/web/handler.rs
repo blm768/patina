@@ -15,6 +15,13 @@ pub trait RequestHandler {
     fn handle(&self, request: Request) -> <WebService as Service>::Future;
 }
 
+// This helps us build route trees without needing to explicitly box all the handlers.
+impl<T: RequestHandler + 'static> From<T> for Box<RequestHandler> {
+    fn from(handler: T) -> Box<RequestHandler> {
+        Box::new(handler)
+    }
+}
+
 pub struct DummyHandler {
     content: String,
 }
