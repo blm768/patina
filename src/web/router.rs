@@ -37,6 +37,10 @@ impl DirectoryRouter {
 
 impl Router for DirectoryRouter {
     fn route(&self, path: &str) -> Option<&RequestHandler> {
+        // Trim leading slash.
+
+        // TODO: make sure there is a child!
+        // Look up the child.
         let (head, tail) = {
             match path.find('/') {
                 Some(separator) => path.split_at(separator),

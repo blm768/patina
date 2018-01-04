@@ -10,7 +10,7 @@ use clap::{App, Arg};
 use hyper::server::Http;
 
 use patina::web;
-use patina::web::WebService;
+use patina::web::service::WebService;
 
 const DEFAULT_BIND_IP: &str = "0.0.0.0";
 const DEFAULT_HTTP_PORT: u16 = 80;
