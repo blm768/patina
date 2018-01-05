@@ -1,6 +1,9 @@
 extern crate futures;
 extern crate hyper;
 
+/**
+ * Code to handle Web requests
+ */
 pub mod web;
 
 #[cfg(test)]

@@ -3,7 +3,7 @@ use std::collections::HashMap;
 
 use web::RequestHandler;
 
-// Removes a single leading slash (if present) from a string
+/// Removes a single leading slash (if present) from a string
 pub fn remove_leading_slash(path: &str) -> &str {
     if path.starts_with('/') {
         &path[1..]
@@ -43,6 +43,9 @@ impl<T: Router + 'static> From<T> for Box<Router> {
 
 /**
  * Performs routing at the directory level
+ *
+ * This router finds the first element of the given path and uses it to dispatch
+ * to the correct "sub-router", which is passed the remaining elements of the path.
  */
 #[derive(Default)]
 pub struct DirectoryRouter {
@@ -53,6 +56,7 @@ pub struct DirectoryRouter {
 }
 
 impl DirectoryRouter {
+    /// Constructs a DirectoryRouter with no routing entries
     pub fn new() -> DirectoryRouter {
         DirectoryRouter {
             index_handler: None,
@@ -60,11 +64,22 @@ impl DirectoryRouter {
         }
     }
 
+    /**
+     * Sets the "index" handler, which handles requests for the directory itself (like the traditional "index.html")
+     */
     pub fn with_index<T: Into<Box<RequestHandler>>>(mut self, handler: T) -> DirectoryRouter {
         self.index_handler = Some(handler.into());
         self
     }
 
+    /**
+     * Adds a named child route
+     *
+     * ```
+     * let router = DirectoryRouter::new().with_named_route("myroute", DummyHandler::new("myroute"));
+     * let handler = router.route("/myroute/");
+     * ```
+     */
     pub fn with_named_route<T: Into<Box<Router>>>(
         mut self,
         name: &str,
