@@ -6,5 +6,7 @@ authors = ["Ben Merritt <blm768@gmail.com>"]
 [dependencies]
 # TODO: break out a workspace or something so "core" libraries don't depend on this?
 clap = "2.29.0"
+diesel = { version = "1.0.0", features = ["postgres"] }
 futures = "0.1.14"
 hyper = "0.11.0"
+mime = "0.3"
