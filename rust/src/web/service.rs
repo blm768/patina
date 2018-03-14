@@ -41,3 +41,9 @@ impl Service for WebService {
         }
     }
 }
+
+pub fn response_as_future(
+    response: <WebService as Service>::Response,
+) -> <WebService as Service>::Future {
+    Box::new(futures::future::ok(response))
+}

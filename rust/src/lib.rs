@@ -1,6 +1,13 @@
+#[macro_use]
+extern crate diesel;
 extern crate futures;
 extern crate hyper;
 extern crate mime;
+
+/**
+ * Handles database schema and interaction
+ */
+pub mod database;
 
 /**
  * Defines useful primitives for data resources

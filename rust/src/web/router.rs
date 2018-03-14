@@ -19,6 +19,7 @@ pub trait Router {
     /**
      * Returns a reference to the RequestHandler that should handle the given request (if one exists)
      */
+    // TODO: disallow returning nothing? (would require explicitly returning a 404 handler instead)
     fn route(&self, path: &str) -> Option<&RequestHandler>;
 }
 
@@ -49,16 +50,17 @@ impl<T: Router + 'static> From<T> for Box<Router> {
  */
 #[derive(Default)]
 pub struct DirectoryRouter {
+    default_handler: Option<Box<RequestHandler>>,
     index_handler: Option<Box<RequestHandler>>,
-    named_routes: HashMap<Box<str>, Box<Router>>,
     // TODO: support regex entries?
-    // TODO: support a default router?
+    named_routes: HashMap<Box<str>, Box<Router>>,
 }
 
 impl DirectoryRouter {
     /// Constructs a DirectoryRouter with no routing entries
     pub fn new() -> DirectoryRouter {
         DirectoryRouter {
+            default_handler: None,
             index_handler: None,
             named_routes: HashMap::new(),
         }
@@ -69,6 +71,14 @@ impl DirectoryRouter {
      */
     pub fn with_index<T: Into<Box<RequestHandler>>>(mut self, handler: T) -> DirectoryRouter {
         self.index_handler = Some(handler.into());
+        self
+    }
+
+    /**
+     * Sets the default handler, which handles requests that would not otherwise match a path.
+     */
+    pub fn with_default<T: Into<Box<RequestHandler>>>(mut self, handler: T) -> DirectoryRouter {
+        self.default_handler = Some(handler.into());
         self
     }
 
@@ -113,7 +123,10 @@ impl Router for DirectoryRouter {
         } else {
             match self.named_routes.get(head) {
                 Some(router) => router.route(tail),
-                None => None,
+                None => match self.default_handler {
+                    Some(ref handler) => Some(handler.borrow()),
+                    _ => None
+                },
             }
         }
     }

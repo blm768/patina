@@ -1,11 +1,10 @@
-use futures;
-
 use hyper::{Method, StatusCode};
 use hyper::header::{ContentLength, ContentType};
 use hyper::server::Service;
 
 use mime;
 
+use web::service;
 use web::service::WebService;
 
 pub type Request = <WebService as Service>::Request;
@@ -56,17 +55,42 @@ impl RequestHandler for DummyHandler {
                 let response = Response::new()
                     .with_header(ContentLength(self.content.len() as u64))
                     .with_body(self.content.clone());
-                Box::new(futures::future::ok(response))
+                service::response_as_future(response)
             }
-            _ => {
-                // TODO: do this properly.
-                let mut response = Response::new()
-                    .with_header(ContentLength("invalid method".len() as u64))
-                    .with_header(ContentType(mime::TEXT_PLAIN))
-                    .with_body("invalid method");
-                response.set_status(StatusCode::BadRequest);
-                Box::new(futures::future::ok(response))
-            }
+            _ => service::response_as_future(error_response(StatusCode::MethodNotAllowed)),
         }
     }
+}
+
+/**
+ * A minimal request handler that returns a fixed status code
+ */
+pub struct BasicStatusCodeHandler {
+    status: StatusCode,
+}
+
+impl BasicStatusCodeHandler {
+    pub fn new(status: StatusCode) -> BasicStatusCodeHandler {
+        BasicStatusCodeHandler { status: status }
+    }
+}
+
+impl RequestHandler for BasicStatusCodeHandler {
+    fn handle(&self, _request: Request) -> ResponseFuture {
+        service::response_as_future(error_response(self.status))
+    }
+}
+
+/**
+ * Constructs a very basic error response for a given HTTP error code
+ */
+pub fn error_response(status: StatusCode) -> Response {
+    let body = status.canonical_reason().unwrap_or("unknown error");
+    let mut response = Response::new()
+        .with_header(ContentLength(body.len() as u64))
+        .with_header(ContentType(mime::TEXT_PLAIN))
+        .with_body(body);
+    response.set_status(status);
+
+    response
 }

@@ -20,9 +20,9 @@ pub mod service;
 
 use std::rc::Rc;
 
-//use hyper::Method;
+use hyper::StatusCode;
 
-use self::handler::{DummyHandler, Request, RequestHandler, ResponseFuture};
+use self::handler::{BasicStatusCodeHandler, DummyHandler, RequestHandler};
 use self::router::{DirectoryRouter, Router};
 
 /*
@@ -42,17 +42,6 @@ Child path:
 Child path with more stuff:
 */
 
-fn handle_transactions(request: Request) -> ResponseFuture {
-    // TODO: handle properly.
-    DummyHandler::new("transactions".to_owned()).handle(request)
-    /*
-    match request.method() {
-        Method::Get => {},
-        _ => {}
-    }
-    */
-}
-
 /**
  * Builds and returns the application's default router
  */
@@ -62,7 +51,8 @@ pub fn default_router() -> Rc<Router> {
             .with_index(DummyHandler::new("index page".to_owned()))
             .with_named_route(
                 "transactions",
-                DirectoryRouter::new().with_index(handle_transactions),
-            ),
+                DirectoryRouter::new().with_index(resource::handle_transactions),
+            )
+            .with_default(BasicStatusCodeHandler::new(StatusCode::NotFound))
     )
 }
